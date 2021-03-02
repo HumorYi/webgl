@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rbga-css-2-webgl</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+      function rgbaCss2Webgl(val) {
+        // 取中间 rgba 数值
+        const result = /\(([\s\S]*)\)/.exec(val)
+
+        if (result) {
+          return result[1].split(',').map((item, i) => {
+            const current = parseInt(item)
+
+            return i < 3 ? current / 255 : current
+          })
+        }
+
+        return [0, 0, 0, 0]
+      }
+
+      // webgl 载体依然是 canvas
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      // 获取 webgl 上下文
+      const gl = canvas.getContext('webgl')
+
+      // 清空绘图区的颜色, clearColor(r,g,b,a) 中的参数是红、绿、蓝、透明度，其定义域是[0,1]
+      gl.clearColor(...rgbaCss2Webgl('rgba(255,255,0,1)'))
+
+      // 使用之前指定的颜色清空绘图区
+      gl.clear(gl.COLOR_BUFFER_BIT)
+    </script>
+  </body>
+</html>

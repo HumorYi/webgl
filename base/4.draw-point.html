@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>draw-point</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <!-- 顶点着色器 -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      void main() {
+        // 在顶点着色器中，gl_Position 是顶点的位置，gl_PointSize 是顶点的尺寸，这种名称都是固定的，不能写成别的
+        // vec4()  是一个4维矢量对象，将vec4() 赋值给顶点点位gl_Position 的时候，其中的前三个参数是x、y、z，第4个参数默认1.0
+        gl_Position = vec4(0, 0, 0, 1);
+        // 值必须为浮点型
+        gl_PointSize = 100.0;
+      }
+    </script>
+
+    <!-- 片元着色器 -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main() {
+        // 在片元着色器中，gl_FragColor 是片元的颜色
+        // 将vec4() 赋值给片元颜色gl_FragColor 的时候，其中的参数是r,g,b,a
+        gl_FragColor = vec4(1, 1, 0, 1);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders } from '../jsm/Utils.js'
+
+      // webgl 载体依然是 canvas
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      // 获取 webgl 上下文
+      const gl = canvas.getContext('webgl')
+
+      // 顶点着色器
+      const vsSource = document.getElementById('vertex-shader').innerText
+      // 片元着色器
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      // 初始化着色器，解析着色器，整合到程序对象里，关联webgl上下文对象，实现两者相关联进行通信
+      initShaders(gl, vsSource, fsSource)
+
+      // 指定将要用来清理绘图区的颜色
+      gl.clearColor(0, 0, 0, 1)
+
+      // 清理绘图区
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      // 绘制顶点
+      gl.drawArrays(gl.POINTS, 0, 1)
+    </script>
+  </body>
+</html>

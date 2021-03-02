@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>color-three.js</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script type="module">
+      import { Color } from 'https://unpkg.com/three/build/three.module.js'
+
+      // webgl 载体依然是 canvas
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      // 获取 webgl 上下文
+      const gl = canvas.getContext('webgl')
+
+      const color = new Color(1, 0, 0, 1)
+
+      !(function ani() {
+        color.offsetHSL(0.005, 0, 0)
+
+        // 清空绘图区的颜色, clearColor(r,g,b,a) 中的参数是红、绿、蓝、透明度，其定义域是[0,1]
+        gl.clearColor(color.r, color.g, color.b, color.a)
+
+        // 使用之前指定的颜色清空绘图区
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        requestAnimationFrame(ani)
+      })()
+    </script>
+  </body>
+</html>
