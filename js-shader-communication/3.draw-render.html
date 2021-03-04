@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>draw-render</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      // 声明变量
+      attribute vec4 a_Position;
+
+      void main() {
+        gl_Position = a_Position;
+        gl_PointSize = 100.0;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main() {
+        gl_FragColor = vec4(1, 1, 0, 1);
+      }
+    </script>
+
+    <!--
+
+      vertexAttrib3f()的同族函数:
+        gl.vertexAttrib1f(location,v0)
+        gl.vertexAttrib2f(location,v0,v1)
+        gl.vertexAttrib3f(location,v0,v1,v2)
+        gl.vertexAttrib4f(location,v0,v1,v2,v3)
+
+        gl.vertexAttrib1f 方法自定一个矢量对象的v0值，v1、v2 则默认为0.0，v3默认为1.0，其数值类型为float 浮点型
+
+      webgl 函数的命名规律
+
+        GLSL ES里函数的命名结构是：<基础函数名><参数个数><参数类型>
+
+        以vertexAttrib3f(location,v0,v1,v2,v3) 为例：
+
+        - vertexAttrib：基础函数名
+        - 3：参数个数，这里的参数个数是要传给变量的参数个数，而不是当前函数的参数个数
+        - f：参数类型，f 代表float 浮点类型，除此之外还有i 代表整型，v代表数字
+    -->
+
+    <script type="module">
+      import { initShaders, transformAxis, render } from '../jsm/Utils.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+
+      const points = []
+
+      gl.clearColor(0, 0, 0, 1)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      // 异步绘图会清除缓冲区，为了保存缓冲区数据，可以先存储缓冲区数据，在异步绘图时再重绘一次
+      /*
+      // 同步画点
+      const points = [
+        { x: -0.1, y: 0 },
+        { x: 0.1, y: 0 }
+      ]
+      render(gl, a_Position, points)
+
+      // 异步画点
+      setTimeout(() => {
+        points.push({ x: -0.5, y: 0 })
+        render(gl, a_Position, points)
+      }, 1000)
+      */
+
+      // 鼠标点击事件
+      canvas.addEventListener(
+        'click',
+        e => {
+          const [x, y] = transformAxis(e, canvas)
+
+          points.push({ x, y })
+
+          render(gl, a_Position, points)
+        },
+        false
+      )
+    </script>
+  </body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>attribute</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <!-- 顶点着色器 -->
+    <!-- attribute 变量是只有顶点着色器才能使用它的。
+      js 可以通过attribute 变量向顶点着色器传递与顶点相关的数据
+
+      - attribute 是存储限定符，是专门用于向外部导出与点位相关的对象的，这类似于es6模板语法中export 。
+      - vec4 是变量类型，vec4是4维矢量对象。
+      - a_Position 是变量名，之后在js中会根据这个变量名导入变量。这个变量名是一个指针，指向实际数据的存储位置。
+      - 也是说，如果在着色器外部改变了a_Position所指向的实际数据，那么在着色器中a_Position 所对应的数据也会修改。
+    -->
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      // 声明变量
+      attribute vec4 a_Position;
+
+      void main() {
+        gl_Position = a_Position;
+        gl_PointSize = 100.0;
+      }
+    </script>
+
+    <!-- 片元着色器 -->
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main() {
+        gl_FragColor = vec4(1, 1, 0, 1);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders } from '../jsm/Utils.js'
+      // webgl 载体依然是 canvas
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      // 获取 webgl 上下文
+      const gl = canvas.getContext('webgl')
+
+      // 顶点着色器
+      const vsSource = document.getElementById('vertex-shader').innerText
+      // 片元着色器
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      // 初始化着色器，解析着色器，整合到程序对象里，关联webgl上下文对象，实现两者相关联进行通信
+      initShaders(gl, vsSource, fsSource)
+
+      /**
+       * 获取着色器中的attribute变量
+       *
+       * 在js 里不能直接写a_Position 来获取着色器中的变量。
+       * 因为着色器和js 是两个不同的语种，着色器无法通过window.a_Position 原理向全局暴露变量。
+       * 要在js 里获取着色器暴露的变量，就需要找人来翻译，这个人就是程序对象
+       *
+       * - gl 是webgl 的上下文对象。
+       * - gl.getAttribLocation() 是获取着色器中attribute 变量的方法。
+       * - getAttribLocation() 方法的参数中：
+       *   - gl.program 是初始化着色器时，在上下文对象上挂载的程序对象。
+       *   - 'a_Position' 是着色器暴露出的变量名。
+       *
+       * 这个过程翻译过来就是：gl 上下文对象对program 程序对象说，你去顶点着色器里找一个名叫'a_Position' 的attribute变量。
+       * */
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+
+      /**
+       * 在js中修改attribute 变量
+       *
+       * attribute变量是一个只会说GLSL ES语言的人，他不认识js语言，所以不能用js的语法来修改attribute变量的值 a_Position.a=1.0
+       *
+       * gl.vertexAttrib3f() 是改变变量值的方法
+       *  参数：
+       *    a_Position 就是之前获取的着色器变量
+       *    后面的3个参数是顶点的x、y、z位置
+       */
+      gl.vertexAttrib3f(a_Position, 0.0, 0.0, 0.0)
+
+      // 清空绘图区的颜色, clearColor(r,g,b,a) 中的参数是红、绿、蓝、透明度，其定义域是[0,1]
+      gl.clearColor(0, 0, 0, 1)
+
+      // 使用之前指定的颜色清空绘图区
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      // 绘制顶点
+      gl.drawArrays(gl.POINTS, 0, 1)
+    </script>
+  </body>
+</html>
