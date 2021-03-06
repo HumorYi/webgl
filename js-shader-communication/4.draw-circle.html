@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>draw-render</title>
+    <title>draw-circle</title>
     <style>
       * {
         padding: 0;
@@ -16,7 +16,6 @@
     <canvas id="canvas"></canvas>
 
     <script id="vertex-shader" type="x-shader/x-vertex">
-      // 声明变量
       attribute vec4 a_Position;
       attribute float a_PointSize;
 
@@ -27,35 +26,25 @@
     </script>
 
     <script id="fragment-shader" type="x-shader/x-fragment">
-      // precision mediump float 是对浮点数精度的定义，可更换级别和类型，这个必须要有，不然画不出东西来
       precision mediump float;
 
       uniform vec4 u_FragColor;
 
       void main() {
-        gl_FragColor = u_FragColor;
+        float radius = 0.5;
+        // distance 计算两个点之间的距离
+        // gl_PointCoord 片元在一个点中的位置，此位置是被归一化的
+        // discard 丢弃，即不会渲染片元，通过丢弃不需要的片元达到绘制圆形效果
+        float dist = distance(gl_PointCoord, vec2(radius, radius));
+
+        if (dist < radius) {
+          gl_FragColor = u_FragColor;
+        }
+        else {
+          discard;
+        }
       }
     </script>
-
-    <!--
-      vertexAttrib3f()的同族函数:
-        gl.vertexAttrib1f(location,v0)
-        gl.vertexAttrib2f(location,v0,v1)
-        gl.vertexAttrib3f(location,v0,v1,v2)
-        gl.vertexAttrib4f(location,v0,v1,v2,v3)
-
-        gl.vertexAttrib1f 方法自定一个矢量对象的v0值，v1、v2 则默认为0.0，v3默认为1.0，其数值类型为float 浮点型
-
-      webgl 函数的命名规律
-
-        GLSL ES里函数的命名结构是：<基础函数名><参数个数><参数类型>
-
-        以vertexAttrib3f(location,v0,v1,v2,v3) 为例：
-
-        - vertexAttrib：基础函数名
-        - 3：参数个数，这里的参数个数是要传给变量的参数个数，而不是当前函数的参数个数
-        - f：参数类型，f 代表float 浮点类型，除此之外还有i 代表整型，v代表数字
-    -->
 
     <script type="module">
       import { initShaders, transformAxis, render } from '../jsm/Utils.js'
@@ -80,18 +69,8 @@
       gl.clearColor(0.0, 0.0, 0.0, 1.0)
       gl.clear(gl.COLOR_BUFFER_BIT)
 
-      // 同步画点
       render(gl, points, a_Position, a_PointSize, u_FragColor)
 
-      /*
-      // 异步绘图会清除缓冲区，为了保存缓冲区数据，可以先存储缓冲区数据，在异步绘图时再重绘一次
-      setTimeout(() => {
-        points.push({ x: -0.5, y: 0 })
-        render(gl, points,a_Position, a_PointSize)
-      }, 1000)
-      */
-
-      // 鼠标点击事件
       canvas.addEventListener(
         'click',
         e => {

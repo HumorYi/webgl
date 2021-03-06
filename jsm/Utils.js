@@ -53,7 +53,7 @@ function transformAxis({ clientX, clientY }, canvas) {
   return [x, y]
 }
 
-function render(gl, position, points) {
+function render(gl, points, position, pointSize, fragColor) {
   /**
    * webgl 同步绘图原理总结
 
@@ -72,8 +72,24 @@ function render(gl, position, points) {
   // 使用之前指定的颜色，清空绘图区
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  points.forEach(({ x, y }) => {
-    gl.vertexAttrib2f(position, x, y)
+  points.forEach(({ x, y, size, color }) => {
+    if (position !== undefined && typeof x === 'number' && typeof y === 'number') {
+      gl.vertexAttrib2f(position, x, y)
+    }
+
+    if (pointSize !== undefined && typeof size === 'number') {
+      gl.vertexAttrib1f(pointSize, size)
+    }
+
+    if (fragColor !== undefined && color) {
+      const { r, g, b, a } = color
+      // gl.uniform4f(fragColor, r, g, b, a)
+
+      // uniform4fv() 方法的第二个参数必须是Float32Array 数组，不要使用普通的Array 对象。
+      // Float32Array 是一种32 位的浮点型数组，它在浏览器中的运行效率要比普通的Array 高很多。
+      gl.uniform4fv(fragColor, new Float32Array([r, g, b, a]))
+    }
+
     gl.drawArrays(gl.POINTS, 0, 1)
   })
 }

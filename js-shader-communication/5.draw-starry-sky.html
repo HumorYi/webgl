@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>draw-starry-sky</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+
+      #canvas {
+        background-image: url('./images/sky.jpg');
+        background-size: cover;
+        background-position: right bottom;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      attribute float a_PointSize;
+
+      void main() {
+        gl_Position = a_Position;
+        gl_PointSize = a_PointSize;
+      }
+    </script>
+
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+
+      uniform vec4 u_FragColor;
+
+      void main() {
+        float radius = 0.5;
+        // distance 计算两个点之间的距离
+        // gl_PointCoord 片元在一个点中的位置，此位置是被归一化的
+        // discard 丢弃，即不会渲染片元，通过丢弃不需要的片元达到绘制圆形效果
+        float dist = distance(gl_PointCoord, vec2(radius, radius));
+
+        if (dist < radius) {
+          gl_FragColor = u_FragColor;
+        }
+        else {
+          discard;
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders, transformAxis, render } from '../jsm/Utils.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+      // 开启颜色合成
+      gl.enable(gl.BLEND)
+      // 设置片元的合成方式
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      const a_PointSize = gl.getAttribLocation(gl.program, 'a_PointSize')
+      const u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor')
+
+      const stars = []
+
+      gl.clearColor(0.0, 0.0, 0.0, 0.0)
+      gl.clear(gl.COLOR_BUFFER_BIT)
+
+      render(gl, stars, a_Position, a_PointSize, u_FragColor)
+
+      canvas.addEventListener(
+        'click',
+        e => {
+          const [x, y] = transformAxis(e, canvas)
+          const size = Math.random() * 5 + 2
+          const a = Math.random()
+
+          stars.push({ x, y, size, color: { r: 0.87, g: 0.91, b: 1.0, a } })
+
+          render(gl, stars, a_Position, a_PointSize, u_FragColor)
+        },
+        false
+      )
+    </script>
+  </body>
+</html>
