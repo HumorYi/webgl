@@ -13,6 +13,8 @@ export default class Compose {
   }
 
   update(time) {
-    this.children.forEach(child => child.update(time))
+    this.children.forEach(function (child) {
+      child.update(time)
+    })
   }
 }

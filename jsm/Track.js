@@ -18,7 +18,7 @@ function getValBetweenFrames(time, frames, last) {
 }
 
 export default class Track {
-  construct(target, parent = null) {
+  constructor(target, parent = null) {
     this.target = target
     this.parent = parent
     this.start = 0
@@ -29,20 +29,25 @@ export default class Track {
 
   update(time) {
     const { keyMap, timeLen, target, loop, start } = this
-    const time = (time - start) % (loop ? timeLen : 1)
+
+    const currentTime = (time - start) % (loop ? timeLen : 1)
 
     for (const [key, frames] of keyMap.entries()) {
-      if (time < frames[0][0]) {
-        target[key] = frames[0][1]
-      } else {
-        const last = frames.timeLen - 1
+      let val = ''
 
-        if (time > frames[last][0]) {
-          target[key] = frames[last][1]
+      if (currentTime < frames[0][0]) {
+        val = frames[0][1]
+      } else {
+        const last = frames.length - 1
+
+        if (currentTime > frames[last][0]) {
+          val = frames[last][1]
         } else {
-          target[key] = getValBetweenFrames(time, frames, last)
+          val = getValBetweenFrames(currentTime, frames, last)
         }
       }
+
+      target[key] = val
     }
   }
 }

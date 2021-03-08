@@ -54,6 +54,8 @@
 
     <script type="module">
       import { initShaders, transformAxis, render } from '../jsm/Utils.js'
+      import Compose from '../jsm/Compose.js'
+      import Track from '../jsm/Track.js'
 
       const canvas = document.getElementById('canvas')
       canvas.width = window.innerWidth
@@ -76,6 +78,8 @@
 
       const stars = []
 
+      const compose = new Compose()
+
       gl.clearColor(0.0, 0.0, 0.0, 0.0)
       gl.clear(gl.COLOR_BUFFER_BIT)
 
@@ -86,14 +90,41 @@
         e => {
           const [x, y] = transformAxis(e, canvas)
           const size = Math.random() * 5 + 2
-          const a = Math.random()
+          const a = 1
+          const star = {
+            x,
+            y,
+            size,
+            color: { r: 0.87, g: 0.91, b: 1.0, a }
+          }
 
-          stars.push({ x, y, size, color: { r: 0.87, g: 0.91, b: 1.0, a } })
+          stars.push(star)
 
-          render(gl, stars, a_Position, a_PointSize, u_FragColor)
+          const track = new Track(star.color)
+          track.start = new Date()
+          track.timeLen = 2000
+          track.loop = true
+          track.keyMap = new Map([
+            [
+              'a',
+              [
+                [500, a],
+                [1000, 0],
+                [1500, a]
+              ]
+            ]
+          ])
+
+          compose.add(track)
         },
         false
       )
+
+      !(function ani() {
+        compose.update(new Date())
+        render(gl, stars, a_Position, a_PointSize, u_FragColor)
+        requestAnimationFrame(ani)
+      })()
     </script>
   </body>
 </html>
