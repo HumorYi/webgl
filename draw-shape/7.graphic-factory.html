@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>graphic-factory</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+
+      canvas {
+        background-color: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      void main(){
+        gl_Position = a_Position;
+        gl_PointSize = 20.0;
+      }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main(){
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders } from '../jsm/Utils.js'
+      import Poly from '../jsm/Poly.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+
+      const poly = new Poly({ gl, vertices: [0.0, 0.2] })
+
+      poly.clear()
+      poly.draw('POINTES')
+
+      setTimeout(() => {
+        poly.addVertices(-0.2, -0.1)
+
+        poly.clear()
+        poly.draw()
+      }, 1000)
+
+      setTimeout(() => {
+        poly.clear()
+        poly.draw('POINTS', 'LINE_STRIP')
+      }, 2000)
+    </script>
+  </body>
+</html>

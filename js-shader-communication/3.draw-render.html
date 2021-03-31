@@ -58,7 +58,7 @@
     -->
 
     <script type="module">
-      import { initShaders, transformAxis, render } from '../jsm/Utils.js'
+      import { initShaders, getMousePosInWebgl, render } from '../jsm/Utils.js'
 
       const canvas = document.getElementById('canvas')
       canvas.width = window.innerWidth
@@ -95,7 +95,7 @@
       canvas.addEventListener(
         'click',
         e => {
-          const [x, y] = transformAxis(e, canvas)
+          const { x, y } = getMousePosInWebgl(e, canvas)
           const n = Math.random()
 
           points.push({ x, y, size: Math.random() * 50 + 10, color: { r: n, g: n, b: 1.0, a: 1.0 } })

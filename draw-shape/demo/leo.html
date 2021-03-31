@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>demo-leo</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #canvas {
+        background: url('./images/sky.jpg');
+        background-size: cover;
+        background-position: right bottom;
+      }
+
+      #audio {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        opacity: 10%;
+        transition: opacity 200ms;
+        z-index: 20;
+      }
+
+      #audio:hover {
+        opacity: 90%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <audio id="audio" controls loop autoplay>
+      <source src="./audio/szz.mp3" type="audio/mpeg" />
+    </audio>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Attr;
+      varying float v_Alpha;
+
+      void main(){
+        gl_Position = vec4(a_Attr.x, a_Attr.y, 0.0, 1.0);
+        gl_PointSize = a_Attr.z;
+        v_Alpha = a_Attr.w;
+      }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      precision mediump float;
+      varying float v_Alpha;
+      uniform bool u_IsPOINTS;
+
+      void main(){
+        if (u_IsPOINTS) {
+          float dist = distance(gl_PointCoord, vec2(0.5, 0.5));
+
+          if(dist<0.5){
+            gl_FragColor = vec4(0.87, 0.91, 1.0, v_Alpha);
+          }else{
+            discard;
+          }
+        }
+        else {
+          gl_FragColor = vec4(0.87, 0.91, 1.0, v_Alpha);
+        }
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders, getMousePosInWebgl, glToCssPos } from '../../jsm/Utils.js'
+      import Poly from '../../jsm/Poly.js'
+      import Sky from '../../jsm/Sky.js'
+      import Compose from '../../jsm/Compose.js'
+      import Track from '../../jsm/Track.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      gl.clearColor(0.0, 0.0, 0.0, 0.0)
+
+      const sky = new Sky(gl)
+      const compose = new Compose()
+      let poly = null
+      let point = null
+      const updateParams = ['x', 'y', 'pointSize', 'alpha']
+
+      canvas.addEventListener(
+        'mousedown',
+        event => {
+          if (event.button === 2) {
+            poly && popVertices()
+          } else {
+            const { x, y } = getMousePosInWebgl(event, canvas)
+
+            poly ? addVertices(x, y) : createVertices(x, y)
+          }
+
+          render()
+        },
+        false
+      )
+
+      canvas.oncontextmenu = function () {
+        return false
+      }
+
+      canvas.addEventListener(
+        'mousemove',
+        event => {
+          const { x, y } = getMousePosInWebgl(event, canvas)
+
+          canvas.style.cursor = hoverPoint(x, y) ? 'cursor' : 'default'
+
+          if (poly) {
+            const obj = poly.geoData[poly.geoData.length - 1]
+            obj.x = x
+            obj.y = y
+          }
+        },
+        false
+      )
+
+      function createVertices(x, y) {
+        poly = new Poly({
+          circleDot: true,
+          size: updateParams.length,
+          attrName: 'a_Attr',
+          geoData: [point ? point : genVertices(x, y), genVertices(x, y)],
+          types: ['POINTS', 'LINE_STRIP']
+        })
+
+        sky.add(poly)
+
+        poly.geoData.forEach(item => createTrack(item))
+      }
+
+      function render() {
+        gl.clear(gl.COLOR_BUFFER_BIT)
+        sky.draw()
+      }
+
+      function genVertices(x, y) {
+        return { x, y, pointSize: randomRange(8, 3), alpha: 1 }
+      }
+
+      function randomRange(max = 1, min = 0) {
+        return Math.floor(Math.random() * (max - min + 1) + min)
+      }
+
+      function createTrack(obj) {
+        const { pointSize } = obj
+        const track = new Track(obj)
+        track.start = new Date()
+        track.timeLen = 2000
+        track.loop = true
+
+        track.keyMap = new Map(
+          [
+            { attr: 'pointSize', val: pointSize },
+            { attr: 'alpha', val: 1 }
+          ].map(({ attr, val }) => gen(attr, val))
+        )
+
+        compose.add(track)
+      }
+
+      function gen(attr, evenVal, oddVal = 0, start = 500, size = 3) {
+        const val = []
+        const result = [attr, val]
+
+        for (let i = 0; i < size; i++) {
+          val.push([start * (i + 1), (i & 1) === 0 ? evenVal : oddVal])
+        }
+
+        return result
+      }
+
+      function addVertices(x, y) {
+        const { geoData } = poly
+
+        if (point) {
+          geoData[geoData.length - 1] = point
+        }
+
+        const obj = genVertices(x, y)
+
+        geoData.push(obj)
+        createTrack(obj)
+      }
+
+      function popVertices() {
+        poly.geoData.pop()
+        compose.children.pop()
+        poly = null
+      }
+
+      function hoverPoint(mx, my) {
+        for (const { geoData } of sky.children) {
+          for (const obj of geoData) {
+            if (poly && obj === poly.geoData[poly.geoData.length - 1]) {
+              continue
+            }
+
+            const delta = {
+              x: mx - obj.x,
+              y: my - obj.y
+            }
+            const { x, y } = glToCssPos(delta, canvas)
+            const dist = x * x + y * y
+            if (dist < 100) {
+              return obj
+            }
+          }
+        }
+
+        return null
+      }
+
+      !(function ani() {
+        compose.update(new Date())
+
+        sky.updateVertices(updateParams)
+
+        render()
+
+        requestAnimationFrame(ani)
+      })()
+    </script>
+  </body>
+</html>

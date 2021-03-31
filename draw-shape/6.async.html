@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>async</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+
+      canvas {
+        background-color: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      void main(){
+        gl_Position = a_Position;
+        gl_PointSize = 20.0;
+      }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main(){
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders } from '../jsm/Utils.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      const vertices = [0.0, 0.2]
+      const vertexBuffer = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+
+      const drawBufferData = () => gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
+      const clearBuffer = () => gl.clear(gl.COLOR_BUFFER_BIT)
+
+      drawBufferData()
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      gl.vertexAttribPointer(a_Position, 2.0, gl.FLOAT, false, 0.0, 0.0)
+      gl.enableVertexAttribArray(a_Position)
+
+      gl.clearColor(0.0, 0.0, 0.0, 1.0)
+      clearBuffer()
+      gl.drawArrays(gl.POINTS, 0.0, 1.0)
+
+      setTimeout(() => {
+        vertices.push(-0.2, -0.1)
+        drawBufferData()
+        clearBuffer()
+        gl.drawArrays(gl.POINTS, 0.0, 2.0)
+      }, 1000)
+
+      setTimeout(() => {
+        clearBuffer()
+        gl.drawArrays(gl.POINTS, 0.0, 2.0)
+        gl.drawArrays(gl.LINES, 0.0, 2.0)
+      }, 2000)
+    </script>
+  </body>
+</html>

@@ -53,7 +53,7 @@
     </script>
 
     <script type="module">
-      import { initShaders, transformAxis, render } from '../jsm/Utils.js'
+      import { initShaders, getMousePosInWebgl, render } from '../jsm/Utils.js'
       import Compose from '../jsm/Compose.js'
       import Track from '../jsm/Track.js'
 
@@ -88,7 +88,7 @@
       canvas.addEventListener(
         'click',
         e => {
-          const [x, y] = transformAxis(e, canvas)
+          const { x, y } = getMousePosInWebgl(e, canvas)
           const size = Math.random() * 5 + 2
           const a = 1
           const star = {

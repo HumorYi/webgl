@@ -53,7 +53,7 @@
     -->
 
     <script type="module">
-      import { initShaders, transformAxis } from '../jsm/Utils.js'
+      import { initShaders, getMousePosInWebgl } from '../jsm/Utils.js'
 
       const canvas = document.getElementById('canvas')
       canvas.width = window.innerWidth
@@ -77,7 +77,7 @@
       canvas.addEventListener(
         'click',
         e => {
-          const [x, y] = transformAxis(e, canvas)
+          const { x, y } = getMousePosInWebgl(e, canvas)
 
           gl.vertexAttrib2f(a_Position, x, y)
 

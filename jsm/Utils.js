@@ -30,7 +30,7 @@ function loadShader(gl, type, source) {
   return shader
 }
 
-function transformAxis({ clientX, clientY }, canvas) {
+function getMousePosInWebgl({ clientX, clientY }, canvas) {
   // 因为html 坐标系中的坐标原点和轴向与canvas 2d是一致的，所以在没有用css 改变画布大小，
   // 也没有对其坐标系做变换的情况下，鼠标点在canvas 画布中的css 位就是鼠标点在canvas 2d坐标系中的位置。
   const { left, top, width, height } = canvas.getBoundingClientRect()
@@ -50,7 +50,7 @@ function transformAxis({ clientX, clientY }, canvas) {
   // webgl 坐标基底两个分量分别是半个canvas的宽和canvas的高，即1个单位的宽是半个canvas的宽，1个单位的高是半个canvas的高
   const [x, y] = [xBaseCenter / halfWidth, yBaseCenterTop / halfHeight]
 
-  return [x, y]
+  return { x, y }
 }
 
 function render(gl, points, position, pointSize, fragColor) {
@@ -85,8 +85,8 @@ function render(gl, points, position, pointSize, fragColor) {
       const { r, g, b, a } = color
       // gl.uniform4f(fragColor, r, g, b, a)
 
-      // uniform4fv() 方法的第二个参数必须是Float32Array 数组，不要使用普通的Array 对象。
-      // Float32Array 是一种32 位的浮点型数组，它在浏览器中的运行效率要比普通的Array 高很多。
+      // uniform4fv() 方法的第二个参数必须是Float32Array 数组，不要使用普通的 Array 对象。
+      // Float32Array 是一种 32 位的浮点型数组，它在浏览器中的运行效率要比普通的 Array 高很多。
       gl.uniform4fv(fragColor, new Float32Array([r, g, b, a]))
     }
 
@@ -94,4 +94,13 @@ function render(gl, points, position, pointSize, fragColor) {
   })
 }
 
-export { initShaders, transformAxis, render }
+function glToCssPos({ x, y }, { width, height }) {
+  const [halfWidth, halfHeight] = [width / 2, height / 2]
+
+  return {
+    x: x * halfWidth,
+    y: -y * halfHeight
+  }
+}
+
+export { initShaders, getMousePosInWebgl, glToCssPos, render }
