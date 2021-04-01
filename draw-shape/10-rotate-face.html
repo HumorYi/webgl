@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rotate-face</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+
+      #canvas {
+        background-color: #000;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+
+      void main(){
+          gl_Position = a_Position;
+          gl_PointSize = 10.0;
+      }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main(){
+          gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders, getMousePosInWebgl, glToCssPos } from '../../jsm/Utils.js'
+      import Poly from '../../jsm/Poly.js'
+      import ShapeGeo from '../../jsm/ShapeGeo.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      gl.clearColor(0.0, 0.0, 0.0, 0.0)
+
+      function rectCssToWebgl(canvas, rectH = 1.0) {
+        const ratio = canvas.width / canvas.height
+        const rectW = rectH / ratio
+        const [halfRectW, halfRectH] = [rectW / 2, rectH / 2]
+        const minX = -halfRectW
+        const minY = -halfRectH
+        const maxX = halfRectW
+        const maxY = halfRectH
+
+        return { minX, minY, maxX, maxY }
+      }
+
+      /*
+      使用点斜式，用于将x轴和y轴上的数据像素数据映射成 webgl数据
+      - ax 像素数据的极小值
+      - ay webgl数据的极小值
+      - bx 像素数据的极大值
+      - by webgl数据的极大值
+      */
+      function ScaleLinear(ax, ay, bx, by) {
+        const delta = {
+          x: bx - ax,
+          y: by - ay
+        }
+
+        const k = delta.y / delta.x
+        const b = ay - ax * k
+
+        return x => k * x + b
+      }
+
+      //路径G-逆时针
+      const pathData = [
+        0,
+        0,
+        600,
+        0,
+        600,
+        100,
+        100,
+        100,
+        100,
+        500,
+        500,
+        500,
+        500,
+        300,
+        300,
+        300,
+        300,
+        400,
+        200,
+        400,
+        200,
+        200,
+        600,
+        200,
+        600,
+        600,
+        0,
+        600
+      ]
+
+      const { minX, minY, maxX, maxY } = rectCssToWebgl(canvas)
+
+      const rectPoly = new Poly({
+        gl,
+        vertices: [minX, maxY, minX, minY, maxX, minY, maxX, maxY]
+      })
+      rectPoly.draw()
+
+      const scaleX = ScaleLinear(0, minX, 600, maxX)
+      const scaleY = ScaleLinear(0, minY, 600, maxY)
+
+      const glData = []
+      const pathDataLen = pathData.length
+      for (let i = 0; i < pathDataLen; i += 2) {
+        glData.push(scaleX(pathData[i]), scaleY(pathData[i + 1]))
+      }
+
+      const pathPoly = new Poly({
+        gl,
+        vertices: glData,
+        types: ['POINTS', 'LINE_LOOP']
+      })
+      pathPoly.draw()
+
+      const shapeGeo = new ShapeGeo(glData)
+      const face = new Poly({
+        gl,
+        vertices: shapeGeo.vertices,
+        types: ['TRIANGLES']
+      })
+      face.draw()
+    </script>
+  </body>
+</html>
