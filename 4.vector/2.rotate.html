@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>rotate</title>
+    <style>
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script id="vertex-shader" type="x-shader/x-vertex">
+      attribute vec4 a_Position;
+      // float angle = radians(30.0);
+      // float sinB = sin(angle);
+      // float cosB = cos(angle);
+
+      uniform float u_SinB;
+      uniform float u_CosB;
+
+      void main(){
+        // gl_Position.x = a_Position.x * cosB - a_Position.y * sinB;
+        // gl_Position.y = a_Position.y * cosB + a_Position.x * sinB;
+
+        gl_Position.x = a_Position.x * u_CosB - a_Position.y * u_SinB;
+        gl_Position.y = a_Position.y * u_CosB + a_Position.x * u_SinB;
+        gl_Position.z = a_Position.z;
+        gl_Position.w = 1.0;
+      }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+      void main(){
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+      }
+    </script>
+
+    <script type="module">
+      import { initShaders } from '../jsm/Utils.js'
+
+      const canvas = document.getElementById('canvas')
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+
+      const gl = canvas.getContext('webgl')
+
+      const vsSource = document.getElementById('vertex-shader').innerText
+      const fsSource = document.getElementById('fragment-shader').innerText
+
+      initShaders(gl, vsSource, fsSource)
+
+      const vertices = new Float32Array([0.0, 0.1, -0.1, -0.1, 0.1, -0.1])
+      const verticesSize = 2
+
+      const vertexBuffer = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
+
+      const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
+      gl.vertexAttribPointer(a_Position, verticesSize, gl.FLOAT, false, 0, 0)
+      gl.enableVertexAttribArray(a_Position)
+
+      const u_SinB = gl.getUniformLocation(gl.program, 'u_SinB')
+      const u_CosB = gl.getUniformLocation(gl.program, 'u_CosB')
+
+      let angle = 0.1
+
+      !(function ani() {
+        angle += 0.01
+
+        gl.uniform1f(u_SinB, Math.sin(angle))
+        gl.uniform1f(u_CosB, Math.cos(angle))
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / verticesSize)
+
+        requestAnimationFrame(ani)
+      })()
+    </script>
+  </body>
+</html>

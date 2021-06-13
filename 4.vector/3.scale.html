@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>draw-triangle-to-rect</title>
+    <title>scale</title>
     <style>
       * {
         padding: 0;
@@ -17,9 +17,14 @@
 
     <script id="vertex-shader" type="x-shader/x-vertex">
       attribute vec4 a_Position;
+      // float scale = 2.5;
+
+      uniform float u_Scale;
+
       void main(){
-        gl_Position = a_Position;
-        // gl_PointSize = 20.0;
+        // gl_Position = vec4(vec3(a_Position) * scale, 1.0);
+
+        gl_Position = vec4(vec3(a_Position) * u_Scale, 1.0);
       }
     </script>
     <script id="fragment-shader" type="x-shader/x-fragment">
@@ -42,38 +47,34 @@
 
       initShaders(gl, vsSource, fsSource)
 
-      // TRIANGLE_STRIP
-      // const vertices = new Float32Array([-0.2, 0.2, -0.2, -0.2, 0.2, 0.2, 0.2, -0.2])
-
-      // TRIANGLE_FAN
-      // const vertices = new Float32Array([-0.2, -0.2, 0.2, -0.2, 0.2, 0.2, -0.2, 0.2])
-
-      // TRIANGLES
-      const vertices = new Float32Array([-0.2, 0.2, -0.2, -0.2, 0.2, 0.2, 0.2, 0.2, -0.2, -0.2, 0.2, -0.2])
+      const vertices = new Float32Array([0.0, 0.1, -0.1, -0.1, 0.1, -0.1])
       const verticesSize = 2
 
       const vertexBuffer = gl.createBuffer()
-
       gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-
       gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
 
       const a_Position = gl.getAttribLocation(gl.program, 'a_Position')
-
       gl.vertexAttribPointer(a_Position, verticesSize, gl.FLOAT, false, 0, 0)
-
       gl.enableVertexAttribArray(a_Position)
 
-      gl.clearColor(0, 0, 0, 1)
+      const u_Scale = gl.getUniformLocation(gl.program, 'u_Scale')
+      gl.uniform1f(u_Scale, 1)
 
-      gl.clear(gl.COLOR_BUFFER_BIT)
+      let angle = 0
 
-      // 三角带
-      // gl.drawArrays(gl.TRIANGLE_STRIP, 0, vertices.length / verticesSize)
-      // 三角面
-      // gl.drawArrays(gl.TRIANGLE_FAN, 0, vertices.length / verticesSize)
-      // 三角形
-      gl.drawArrays(gl.TRIANGLES, 0, vertices.length / verticesSize)
+      !(function ani() {
+        angle += 0.05
+
+        gl.uniform1f(u_Scale, Math.sin(angle) + 1)
+
+        gl.clearColor(0.0, 0.0, 0.0, 1.0)
+        gl.clear(gl.COLOR_BUFFER_BIT)
+
+        gl.drawArrays(gl.TRIANGLES, 0, vertices.length / verticesSize)
+
+        requestAnimationFrame(ani)
+      })()
     </script>
   </body>
 </html>
